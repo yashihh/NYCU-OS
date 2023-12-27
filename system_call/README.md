@@ -1,4 +1,4 @@
-[Assignment 1: Compiling Linux Kernel and Adding Custom System Calls](https://hackmd.io/UJE-W1n9QIu0yPRa3GM8qA?view)
+[Assignment 1: Compiling Linux Kernel and Adding Custom System Calls](https://hackmd.io/@shihh/os-assignment-1)
 
 ### 解壓縮&建資料夾
 ```cmd
