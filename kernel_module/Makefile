@@ -3,6 +3,9 @@ CURRENT_PATH := $(shell pwd)
 
 obj-m += kfetch_mod_311581039.o
 
+# 忽略 warning
+CFLAGS_kfetch_mod_311581039.o := -w
+
 all:
 	make -C $(KERNELDIR) M=$(CURRENT_PATH) modules
 
