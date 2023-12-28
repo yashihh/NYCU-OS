@@ -20,21 +20,28 @@ char pic4[] = "      / --- \\      ";
 char pic5[] = "     ( |   | |     ";
 char pic6[] = "   |\\\\_)___/\\)/\\   ";
 char pic7[] = "  <__)------(__/   ";
-char dash[] = "-------------";
 
-char info0[] = "\0";
-char info1[] = "\0";
-char info2[] = "\0";
-char info3[] = "\0";
-char info4[] = "\0";
-char info5[] = "\0";
+#define INFO_COUNT 6
+#define INFO_SIZE 50
 
-char sys_kernel[30];
-char sys_cpu[50];
-char sys_cpus[10];
-char sys_mem[20];
-char sys_procs[10];
-char sys_uptime[10];
+char info0[INFO_SIZE];
+char info1[INFO_SIZE];
+char info2[INFO_SIZE];
+char info3[INFO_SIZE];
+char info4[INFO_SIZE];
+char info5[INFO_SIZE];
+char dash[INFO_SIZE];
+
+char *infoPointers[INFO_COUNT] = {info0, info1, info2, info3, info4, info5};
+
+char sys_kernel[INFO_SIZE];
+char sys_cpu[INFO_SIZE];
+char sys_cpus[INFO_SIZE];
+char sys_mem[INFO_SIZE];
+char sys_procs[INFO_SIZE];
+char sys_uptime[INFO_SIZE];
+
+
 
 /* Global variables are declared as static, so are global within the file. */ 
 
@@ -52,6 +59,9 @@ static struct class *cls;
 /* Called when a process, which already opened the dev file, attempts to 
  * read from it. 
  */ 
+
+bool flag = false;
+
 static ssize_t kfetch_read(struct file *filp,
                            char __user *buffer,
                            size_t length,
@@ -65,18 +75,35 @@ static ssize_t kfetch_read(struct file *filp,
     
     s64  uptime;
     uptime = ktime_to_ms(ktime_get_boottime()) / 1000;
+    
     unsigned int runningProcs = 0;
-
     struct task_struct *task;
     for_each_process(task) {
         runningProcs++;
     }
-    sprintf(sys_kernel, "%s", init_utsname()->release);
-    sprintf(sys_cpu, "%s", cpuinfo->x86_model_id );
-    sprintf(sys_cpus, "%lu / %lu", num_online_cpus(), num_present_cpus());
-    sprintf(sys_mem, "%lu MB / %lu MB", i.freeram * 4 / 1024, i.totalram * 4 / 1024 );
-    sprintf(sys_procs, "%u", runningProcs );
-    sprintf(sys_uptime, "%lu mins", uptime / 60);
+
+    /* fetching the information */
+    char *hostname = init_utsname()->nodename;
+    int namelen = 0;
+    while (namelen < __NEW_UTS_LEN && hostname[namelen] != '\0') {
+        namelen++;
+    }
+    memset(dash, '-', namelen );
+    sprintf(sys_kernel, "Kernel:   %s", init_utsname()->release);
+    sprintf(sys_cpu, "CPU:      %s", cpuinfo->x86_model_id );
+    sprintf(sys_cpus, "CPUs:     %lu / %lu", num_online_cpus(), num_present_cpus());
+    sprintf(sys_mem, "Mem:      %lu MB / %lu MB", i.freeram * 4 / 1024, i.totalram * 4 / 1024 );
+    sprintf(sys_procs, "Procs:    %u", runningProcs );
+    sprintf(sys_uptime, "Uptime:   %lu mins", uptime / 60);
+
+    if (!flag){
+        sprintf(info0, "%s", sys_kernel);
+        sprintf(info1, "%s", sys_cpu);
+        sprintf(info2, "%s", sys_cpus);
+        sprintf(info3, "%s", sys_mem);
+        sprintf(info4, "%s", sys_procs);
+        sprintf(info5, "%s", sys_uptime);
+    }
     len = sprintf(kfetch_buf, 
                     "%s%s\n"
                     "%s%s\n"
@@ -86,16 +113,14 @@ static ssize_t kfetch_read(struct file *filp,
                     "%s%s\n"
                     "%s%s\n"
                     "%s%s\n",
-                    pic0, init_utsname()->nodename,
+                    pic0, hostname,
                     pic1, dash, 
-                    pic2, sys_kernel,
-                    pic3, sys_cpu,
-                    pic4, sys_cpus,
-                    pic5, sys_mem,
-                    pic6, sys_procs,
-                    pic7, sys_uptime);
-    /* fetching the information */
-
+                    pic2, info0,
+                    pic3, info1,
+                    pic4, info2,
+                    pic5, info3,
+                    pic6, info4,
+                    pic7, info5);
 
     if (copy_to_user(buffer, kfetch_buf, len)) {
         pr_alert("Failed to copy data to user");
@@ -117,36 +142,49 @@ static ssize_t kfetch_write(struct file *filp,
                             size_t length,
                             loff_t *offset)
 {
-    //memcpy(array2, array1, sizeof(array2));
     int mask_info;
+    char **ptr = infoPointers;
+
+    flag = true;
 
     if (copy_from_user(&mask_info, buffer, length)) {
         pr_alert("Failed to copy data from user");
         return 0;
     }
 
-    /* setting the information mask */
-    if (mask_info & KFETCH_RELEASE) {
+    pr_info("[kfetch_write] mask_info: [%d]\n", mask_info);
 
+    /* setting the information mask */
+    for (int i = 0; i < INFO_COUNT; ++i) {
+        memset(infoPointers[i], 0, INFO_SIZE);
+    }
+    if (mask_info & KFETCH_RELEASE) {
+        sprintf(*ptr, "%s",sys_kernel);
+        **ptr++;
     }
     if (mask_info & KFETCH_NUM_CPUS) {
-
+        sprintf(*ptr, "%s",sys_cpus);
+        **ptr++;
     }
     if (mask_info & KFETCH_CPU_MODEL) {
-
+        sprintf(*ptr, "%s",sys_cpu);
+        **ptr++;
     }
     if (mask_info & KFETCH_MEM) {
+        sprintf(*ptr, "%s",sys_mem);
+        **ptr++;
 
     }
     if (mask_info & KFETCH_UPTIME) {
+        sprintf(*ptr, "%s",sys_uptime);
+        **ptr++;
 
     }
     if (mask_info & KFETCH_NUM_PROCS) {
-
+        sprintf(*ptr, "%s",sys_procs);
     }
 
-    pr_info("[kfetch_write] mask_info: [%d]\n", mask_info);
-    return 0;
+    return length;
 
 }
 
