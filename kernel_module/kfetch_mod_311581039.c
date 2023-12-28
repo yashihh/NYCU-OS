@@ -8,7 +8,6 @@
 #include <linux/mm.h> /* si_meminfo() */
 #include <linux/sysinfo.h> /* to get system info. e.g. cpu, mem*/
 #include <linux/utsname.h> /* to get system info. e.g. nodename, release */
-#include <linux/jiffies.h>
 #include "kfetch.h"
 #include <linux/ktime.h>
 
