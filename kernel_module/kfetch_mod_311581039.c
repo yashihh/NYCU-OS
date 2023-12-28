@@ -7,11 +7,6 @@
 #include <linux/printk.h> 
 #include "kfetch.h"
 
-/*  Prototypes - this would normally go in a .h file */ 
-static int kfetch_open(struct inode *, struct file *); 
-static int kfetch_release(struct inode *, struct file *); 
-static ssize_t kfetch_read(struct file *, char __user *, size_t, loff_t *); 
-static ssize_t kfetch_write(struct file *, const char __user *, size_t, loff_t *); 
 
 char pic1[] = "        .-.";      
 char pic2[] = "       (.. |";     
@@ -31,51 +26,6 @@ static int major; /* major number assigned to our device driver */
 static char kfetch_buf[KFETCH_BUF_SIZE + 1]; 
 
 static struct class *cls;
-
-static struct file_operations kfetch_ops = {
-    .owner   = THIS_MODULE,
-    .read    = kfetch_read,
-    .write   = kfetch_write,
-    .open    = kfetch_open,
-    .release = kfetch_release,
-};
-
-static int __init kfetch_init(void)
-{
-    /* Major set to 0, kernel 會自動分配一個還沒用到的 major number */ 
-    major = register_chrdev(0, KFETCH_DEV_NAME, &kfetch_ops); 
-    
-    if (major < 0){
-        pr_alert("Registering char device failed with %d\n", major);
-	    return major;
-
-    }
-    
-    /* Register class */ 
-    cls = class_create(THIS_MODULE, KFETCH_DEV_NAME); 
-
-    /* Create device file under /dev 
-     * after this step, device file have generated under /dev/
-     */ 
-    device_create(cls, NULL, MKDEV(major, 0), NULL, KFETCH_DEV_NAME); 
-
-    pr_info("kfetch module init\n");
-	return 0;
-}
-
-static void __exit kfetch_exit(void)
-{
-    /* Unregister the device file */ 
-    device_destroy(cls, MKDEV(major, 0)); 
-    
-    /* Unregister the class */ 
-    class_destroy(cls); 
- 
-    /* Unregister the device */ 
-    unregister_chrdev(major, KFETCH_DEV_NAME); 
-
-    pr_info("kfetch module exit\n");
-}
 
 /* Method*/
 
@@ -135,6 +85,52 @@ static int kfetch_release(struct inode *inode, struct file *filp)
     pr_info("kfetch_release\n");
     return 0;
 }
+
+static struct file_operations kfetch_ops = {
+    .owner   = THIS_MODULE,
+    .read    = kfetch_read,
+    .write   = kfetch_write,
+    .open    = kfetch_open,
+    .release = kfetch_release,
+};
+
+static int __init kfetch_init(void)
+{
+    /* Major set to 0, kernel 會自動分配一個還沒用到的 major number */ 
+    major = register_chrdev(0, KFETCH_DEV_NAME, &kfetch_ops); 
+    
+    if (major < 0){
+        pr_alert("Registering char device failed with %d\n", major);
+	    return major;
+
+    }
+    
+    /* Register class */ 
+    cls = class_create(THIS_MODULE, KFETCH_DEV_NAME); 
+
+    /* Create device file under /dev 
+     * after this step, device file have generated under /dev/
+     */ 
+    device_create(cls, NULL, MKDEV(major, 0), NULL, KFETCH_DEV_NAME); 
+
+    pr_info("kfetch module init\n");
+	return 0;
+}
+
+static void __exit kfetch_exit(void)
+{
+    /* Unregister the device file */ 
+    device_destroy(cls, MKDEV(major, 0)); 
+    
+    /* Unregister the class */ 
+    class_destroy(cls); 
+ 
+    /* Unregister the device */ 
+    unregister_chrdev(major, KFETCH_DEV_NAME); 
+
+    pr_info("kfetch module exit\n");
+}
+
 
 
 MODULE_AUTHOR("yashihh <yashihh.11@nycu.edu.tw>");
