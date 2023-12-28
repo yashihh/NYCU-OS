@@ -47,8 +47,13 @@ char sys_uptime[INFO_SIZE];
 
 static int major; /* major number assigned to our device driver */ 
 
+
+enum { 
+    CDEV_NOT_USED = 0, 
+    CDEV_EXCLUSIVE_OPEN = 1, 
+}; 
 /* Is device open? Used to prevent multiple access to device */ 
-//static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED); 
+static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED); 
  
 static char kfetch_buf[KFETCH_BUF_SIZE]; 
 
@@ -193,6 +198,9 @@ static ssize_t kfetch_write(struct file *filp,
  */ 
 static int kfetch_open(struct inode *inode, struct file *filp) 
 {
+    if (atomic_cmpxchg(&already_open, CDEV_NOT_USED, CDEV_EXCLUSIVE_OPEN)) 
+        return -EBUSY; 
+    
     try_module_get(THIS_MODULE); // Increment the reference count
     return 0;
 }
@@ -200,6 +208,9 @@ static int kfetch_open(struct inode *inode, struct file *filp)
 /* Called when a process closes the device file. */ 
 static int kfetch_release(struct inode *inode, struct file *filp)
 {
+    /* We're now ready for our next caller */ 
+    atomic_set(&already_open, CDEV_NOT_USED);
+
     module_put(THIS_MODULE); // Decrement the reference count
     return 0;
 }
