@@ -129,10 +129,10 @@ module_exit(dev_exit);
     ```
     - `major` 設為 0 ， kernel 會自動分配一個還沒用到的 major number
     - `name` 為 device name
-    >[!NOTE]
-    >that we didn’t pass the **minor number** to register_chrdev . That is because the kernel doesn’t care about the minor number;
     - 還有另一個function可用 `alloc_chrdev_region()`
-- 註冊完後會新增一個 entry in` /proc/devices`
+>[!NOTE]
+>that we didn’t pass the **minor number** to register_chrdev . That is because the kernel doesn’t care about the minor number;
+- 註冊完後會新增一個 entry in `/proc/devices`
     ```
     $ cat /proc/devices | grep "kfetch"
     239 kfetch
@@ -142,13 +142,13 @@ module_exit(dev_exit);
     ```c
     void unregister_chrdev(unsigned int major, const char *name)
     ```
-- in ++include/linux/module.h++, **counter** 用來 track 有多少 processes 正在使用該 module
+- in /include/linux/module.h, **counter** 用來 track 有多少 processes 正在使用該 module
     - `try_module_get(THIS_MODULE)` : Increment the reference count of current module.
     - `module_put(THIS_MODULE)` : Decrement the reference count of current module.
     - `module_refcount(THIS_MODULE)` : Return the value of reference count of current module.
 - 可以使用 `cat /proc/modules` or `sudo lsmod` 查看 **counter** value
 >[!NOTE]
-> that you do not have to check the counter within `cleanup_module` because the check will be performed for you by the system call `sys_delete_module`, defined in ++include/linux/syscalls.h++
+> that you do not have to check the counter within `cleanup_module` because the check will be performed for you by the system call `sys_delete_module`, defined in /include/linux/syscalls.h
 
 ### file operations
 #### Prevent multiple accesses
