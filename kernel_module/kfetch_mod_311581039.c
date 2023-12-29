@@ -162,6 +162,10 @@ static ssize_t kfetch_write(struct file *filp,
     for (int i = 0; i < INFO_COUNT; ++i) {
         memset(infoPointers[i], 0, INFO_SIZE);
     }
+    if (mask_info == KFETCH_FULL_INFO){
+        flag = false;
+        return length;
+    }
     if (mask_info & KFETCH_RELEASE) {
         sprintf(*ptr, "%s",sys_kernel);
         **ptr++;
@@ -177,12 +181,10 @@ static ssize_t kfetch_write(struct file *filp,
     if (mask_info & KFETCH_MEM) {
         sprintf(*ptr, "%s",sys_mem);
         **ptr++;
-
     }
     if (mask_info & KFETCH_UPTIME) {
         sprintf(*ptr, "%s",sys_uptime);
         **ptr++;
-
     }
     if (mask_info & KFETCH_NUM_PROCS) {
         sprintf(*ptr, "%s",sys_procs);

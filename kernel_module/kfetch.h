@@ -20,6 +20,6 @@
 #define KFETCH_UPTIME    (1 << 4)
 #define KFETCH_NUM_PROCS (1 << 5)
 
-#define KFETCH_FULL_INFO ((1 << KFETCH_NUM_INFO) - 1);
+#define KFETCH_FULL_INFO ((1 << KFETCH_NUM_INFO) - 1)
 
 #endif
