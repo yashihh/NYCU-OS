@@ -12,4 +12,4 @@ This assignment aims to implement a program to apply different scheduling polici
 ### [Assignment 3: System Information Fetching Kernel Module](https://hackmd.io/@a3020008/r1Txj5ES6)
 
 In this assignment, you are required to implement a kernel module `kfetch_mod` . `kfetch_mod` is a character device driver that creates a device called `/dev/kfetch` The user-space program `kfetch` can retrieve the system information by reading from this device.
-- Score: ??
+- Score: 100
